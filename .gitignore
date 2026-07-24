@@ -1,0 +1,33 @@
+# --- Simulação GHDL/GTKWave ---
+sim/build/
+*.ghw
+*.vcd
+*.cf
+work-obj*.cf
+*.o
+
+# --- Intel Quartus (arquivos gerados) ---
+quartus/db/
+quartus/incremental_db/
+quartus/output_files/
+quartus/simulation/
+quartus/.qsys_edit/
+quartus/greybox_tmp/
+*.qws
+*.rpt
+*.summary
+*.smsg
+*.jdi
+*.pin
+*.pof
+*.sof.bak
+
+# --- Sistema operacional ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Editores ---
+*.swp
+*~
+.vscode/
