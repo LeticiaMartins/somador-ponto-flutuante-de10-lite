@@ -15,13 +15,26 @@ que você precisa para não travar lá.
 | Item | Valor |
 |---|---|
 | Usuário GitHub | `LeticiaMartins` |
-| Repositório | `[preencher após criar]` |
-| URL do repo | `[preencher após criar]` |
+| Repositório | `somador-ponto-flutuante-de10-lite` (privado) |
+| URL do repo | https://github.com/LeticiaMartins/somador-ponto-flutuante-de10-lite |
+| Clonar | `gh repo clone LeticiaMartins/somador-ponto-flutuante-de10-lite` |
 | Identidade Git (nome) | `Leticia Martins` |
 | Identidade Git (email) | `lemartins.flag@gmail.com` |
 | Placa | Terasic DE10-Lite (Intel MAX 10, `10M50DAF484C7G`) |
 | Software simulação | GHDL + GTKWave |
 | Software síntese | Intel Quartus Prime + Questa |
+
+---
+
+## 👩‍🏫 Dar acesso à professora (repo é PRIVADO!)
+Antes de entregar o link no Moodle, a professora precisa ser adicionada como
+colaboradora, senão ela não consegue abrir o repositório:
+```bash
+gh repo add-collaborator LeticiaMartins/somador-ponto-flutuante-de10-lite <usuario-github-da-profa> --permission read
+```
+Ou pelo site: **Settings → Collaborators → Add people**.
+> Descubra o usuário GitHub da professora (o do template é `victorialejandra`,
+> confirme com ela se é a conta que ela usa para avaliar).
 
 ---
 
