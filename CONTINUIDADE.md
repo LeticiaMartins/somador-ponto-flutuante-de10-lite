@@ -98,6 +98,16 @@ Ele faz `git add -A`, `git commit` e `git push` de uma vez.
 Se quiser que ele rode sem pedir senha, o `gh auth login` já configura o
 credential helper do Git — depois do primeiro login não pede mais.
 
+> ⚠️ **Cuidado com as DUAS contas do GitHub (só no PC de casa):** neste
+> notebook o `gh` tem duas contas logadas — a **pessoal** (`LeticiaMartins`,
+> dona deste repo) e a do **trabalho** (`leticia-pascale`). Se a conta ativa
+> estiver na do trabalho, o `git push` falha com *"Repository not found"*
+> (a conta do trabalho não enxerga o repo privado pessoal). O `salvar.sh` já
+> troca para a conta certa automaticamente. Se precisar fazer na mão:
+> ```bash
+> gh auth switch --hostname github.com --user LeticiaMartins
+> ```
+
 ---
 
 ## ✅ Checklist rápido ao trocar de máquina
