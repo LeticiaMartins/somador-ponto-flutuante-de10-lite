@@ -1,42 +1,33 @@
 -- =====================================================================
--- fp_adder_test.vhd
--- Circuito de teste para a placa (Pong P. Chu, Listing 3.20).
+-- fp_adder_test_etapa1_livro.vhd
+-- COPIA CONGELADA da Etapa 1 -- Pong P. Chu, Listing 3.20, SEM NENHUMA
+-- alteracao de logica. Mantida apenas para comparacao no relatorio (ver
+-- README.md, secao 3 "O que mudamos no VHDL original").
 --
--- ETAPA 2: adaptado para a DE10-Lite (10 switches, 2 botoes (KEY), 6
--- displays de 7 segmentos). O livro original foi escrito para uma placa
--- com 8 switches, 4 botoes e 4 displays. A versao original, congelada e
--- sem alteracoes, esta em fp_adder_test_etapa1_livro.vhd (so para
--- comparacao no relatorio -- nao faz parte do build ativo).
+-- NAO faz parte do build ativo (nao e chamada por nenhum testbench nem
+-- pelo projeto Quartus) -- por isso a entity foi renomeada para
+-- 'fp_adder_test_etapa1_livro', evitando colisao de nome com a versao
+-- adaptada para a DE10-Lite em fp_adder_test.vhd (Etapa 2).
 --
--- Mudancas em relacao ao original (Listing 3.20):
---   - 'btn(3 downto 0)' -> 'key(1 downto 0)': a DE10-Lite so tem 2 botoes
---     fisicos, nao 4. O 'exp2' (4 bits), que no livro vinha inteiro dos
---     botoes, agora e formado por 'sw(9) & sw(8) & key(1) & key(0)' -- os
---     2 switches extras que a DE10-Lite tem a mais (10 vs 8 do livro)
---     cobrem os 2 bits que os botoes que faltam nao conseguem mais dar.
---   - 'sw' passa de 8 para 10 bits (sw(9 downto 0)).
---   - 'sign1, exp1, frac1' (operando fixo) e 'sign2, frac2' (via sw(7
---     downto 0)) NAO mudaram -- mesma logica do livro.
---   - Usamos so 4 dos 6 displays da DE10-Lite (an continua 4 bits, igual
---     ao disp_mux original) -- sinal + expoente + 2 digitos de fracao,
---     igual ao circuito original. Pode ser estendido para os 6 displays
---     depois, se o grupo quiser.
+-- Board original do livro: 8 switches, 4 botoes, 4 displays de 7 segmentos.
+-- Comparar com fp_adder_test.vhd (Etapa 2) para ver a adaptacao completa
+-- para a DE10-Lite (10 switches, 2 botoes (KEY), 6 displays).
 -- =====================================================================
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity fp_adder_test is
+entity fp_adder_test_etapa1_livro is
     port (
         clk  : in  std_logic;
-        sw   : in  std_logic_vector(9 downto 0);
-        key  : in  std_logic_vector(1 downto 0);
+        sw   : in  std_logic_vector(7 downto 0);
+        btn  : in  std_logic_vector(3 downto 0);
         an   : out std_logic_vector(3 downto 0);
         sseg : out std_logic_vector(7 downto 0)
     );
-end fp_adder_test;
+end fp_adder_test_etapa1_livro;
 
-architecture arch of fp_adder_test is
+architecture arch of fp_adder_test_etapa1_livro is
     signal sign1, sign2 : std_logic;
     signal exp1,  exp2  : std_logic_vector(3 downto 0);
     signal frac1, frac2 : std_logic_vector(7 downto 0);
@@ -46,19 +37,14 @@ architecture arch of fp_adder_test is
     signal led3, led2, led1, led0 : std_logic_vector(7 downto 0);
 begin
     -- monta os operandos de entrada do somador
-    -- operando 1: fixo, so os 2 LSBs variam (reaproveita sw(1)/sw(0),
-    -- igual ao livro original)
     sign1 <= '0';
     exp1  <= "1000";
     frac1 <= '1' & sw(1) & sw(0) & "10101";
-
-    -- operando 2: sinal + fracao pelos mesmos 8 switches do livro;
-    -- expoente agora vem de 2 switches extras + os 2 botoes da DE10-Lite
     sign2 <= sw(7);
-    exp2  <= sw(9) & sw(8) & key(1) & key(0);
+    exp2  <= btn;
     frac2 <= '1' & sw(6 downto 0);
 
-    -- instancia o somador de ponto flutuante (inalterado desde a Etapa 1)
+    -- instancia o somador de ponto flutuante
     fp_add_unit : entity work.fp_adder
         port map (
             sign1 => sign1, sign2 => sign2, exp1 => exp1, exp2 => exp2,
@@ -81,8 +67,7 @@ begin
     led3 <= "11111110" when sign_out = '1' else
             "11111111";
 
-    -- multiplexacao temporal dos displays de 7 segmentos (usa 4 dos 6
-    -- displays disponiveis na DE10-Lite -- ver nota no cabecalho)
+    -- multiplexacao temporal dos displays de 7 segmentos
     disp_unit : entity work.disp_mux
         port map (
             clk => clk, reset => '0',

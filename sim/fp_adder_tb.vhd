@@ -80,11 +80,23 @@ begin
         -- ---- Caso 3: subtracao pequena demais -> ZERO ----
         -- A = +0.10000000 x 2^1 ; B = -0.10000000 x 2^1  (magnitudes iguais)
         -- Esperado: 0
+        --
+        -- sign='1' (nao '0'!): o Listing 3.19 do livro (fp_adder.vhd linha
+        -- 119: "sign_out <= signb;") nao zera o sinal quando o resultado da
+        -- normalizacao vira zero -- so exp e frac sao zerados (linhas
+        -- 108-111). Com exp1&frac1 = exp2&frac2 (empate), o estagio 1 (linha
+        -- 42: "if (exp1&frac1) > (exp2&frac2)") cai sempre no else, entao
+        -- signb = sign2 = '1'. Verificado tambem no livro original
+        -- (codigo-fonte-livro-pong-chu.pdf, Listing 3.19, linha 107): o
+        -- mesmo comportamento existe no algoritmo publicado, nao e erro de
+        -- transcricao nossa. O valor sign='0' aqui era uma suposicao errada
+        -- da IA (assumiu zero com sinal canonico, estilo IEEE 754, que este
+        -- formato simplificado nao implementa) -- ver ia-log da Etapa 1.
         sign1 <= '0'; exp1 <= "0001"; frac1 <= "10000000";
         sign2 <= '1'; exp2 <= "0001"; frac2 <= "10000000";
         wait for 20 ns;
         check(sign_out, exp_out, frac_out, "Caso 3 (resultado zero)",
-              '0', "0000", "00000000");
+              '1', "0000", "00000000");
 
         -- ---- Caso 4: soma com CARRY-OUT (desloca direita, exp+1) ----
         -- A = +0.11111111 x 2^4 ; B = +0.11111111 x 2^4

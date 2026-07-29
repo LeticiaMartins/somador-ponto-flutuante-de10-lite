@@ -1,5 +1,6 @@
 # --- Simulação GHDL/GTKWave ---
 sim/build/
+sim/build_etapa2/
 *.ghw
 *.vcd
 *.cf
@@ -31,3 +32,10 @@ desktop.ini
 *.swp
 *~
 .vscode/
+
+# --- Config local do Claude Code (por máquina, não versionar) ---
+.claude/settings.local.json
+
+# --- Arquivos-lixo de R (criados por engano) ---
+.Rhistory
+**/.Rhistory

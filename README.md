@@ -75,40 +75,94 @@ O somador processa a soma em **4 estágios** encadeados (combinacionais):
 | `exp_out` | out | 4 | expoente do resultado |
 | `frac_out` | out | 8 | fração do resultado |
 
-*(Espaço para incluir a tabela dos 4 casos de teste e/ou diagrama detalhado.)*
-
 *Etapa 2*
 ## 3. Adaptações de Hardware (DE10-Lite)
-Indicar o que a arquitetura original usava e quais mudanças foram feitas para a
-implementação na placa.
+
+A placa do livro (Nexys/Basys, Xilinx) tem 8 switches, 4 botões e 4 displays
+de 7 segmentos. A DE10-Lite tem **10 switches, 2 botões (KEY) e 6 displays
+(HEX0-HEX5)** — larguras diferentes em quase todo I/O usado pelo circuito de
+teste (`fp_adder_test.vhd`, Listing 3.20).
 
 **O que mudamos no VHDL original:**
-* Removemos... _(a preencher na Etapa 2)_
-* Roteamos ... _(a preencher na Etapa 2)_
-* Reorganizamos ... _(a preencher na Etapa 2)_
+* **`exp2` (4 bits):** no livro vinha inteiro dos 4 botões (`btn(3 downto 0)`).
+  A DE10-Lite só tem 2 botões físicos, então passamos a montar `exp2` como
+  `sw(9) & sw(8) & key(1) & key(0)` — os **2 switches extras** que a
+  DE10-Lite tem a mais (10 vs 8 do livro) cobrem exatamente os 2 bits que os
+  botões que faltam não conseguem mais fornecer. Usa 100% dos switches e
+  botões disponíveis, sem tirar capacidade de teste do circuito original.
+* **`sw`:** largura ampliada de 8 para 10 bits (`sw(9 downto 0)`).
+* **`btn` → `key`:** renomeado e reduzido de 4 para 2 bits, para bater com
+  os nomes reais dos botões da DE10-Lite (`KEY0`/`KEY1`).
+* **`sign1, exp1, frac1`** (operando fixo) e **`sign2, frac2`** (via
+  `sw(7 downto 0)`) **não mudaram** — mesma lógica do livro.
+* **Displays:** mantivemos em 4 (dos 6 disponíveis), igual ao circuito
+  original — sinal + expoente + 2 dígitos de fração. Pode ser estendido
+  para os 6 displays depois.
+* A versão original (Listing 3.20, sem nenhuma alteração) foi preservada
+  como cópia física em
+  [`src/fp_adder_test_etapa1_livro.vhd`](src/fp_adder_test_etapa1_livro.vhd)
+  para comparação direta com a versão adaptada em
+  [`src/fp_adder_test.vhd`](src/fp_adder_test.vhd).
+* Dois componentes que o `fp_adder_test` usa (`hex_to_sseg` e `disp_mux`) não
+  estavam nos PDFs do projeto — foram localizados e transcritos do
+  livro-texto completo (Listings 3.12 e 4.13); ver
+  [`ia-log/2026-07-24-sessao-03-etapa2-componentes.md`](ia-log/2026-07-24-sessao-03-etapa2-componentes.md).
 
 **Descrição gráfica do sistema**
-* Caso mude em relação ao item 2, atualizar aqui.
+* Sem mudança na estrutura dos 4 estágios do somador (item 2) — a adaptação
+  desta etapa é só na "casca" (`fp_adder_test`) que conecta switches/botões/
+  displays ao `fp_adder`, que continua inalterado.
+
+**Validação pendente:** o testbench novo
+([`sim/fp_adder_test_tb.vhd`](sim/fp_adder_test_tb.vhd)) e o script
+([`sim/run_sim_etapa2.sh`](sim/run_sim_etapa2.sh)) já foram criados e
+conferidos quanto à compilação (GHDL `-a`/`-e`), mas a simulação
+(`-r` + GTKWave) ainda **não foi rodada pelo grupo** — ver `ia-log` da
+sessão 03 para os próximos passos.
 
 ## 4. Evidências de Validação
 
-### Simulação
-Imagem do funcionamento do 4º estágio (normalização), considerando os 4 casos.
+### Simulação (Etapa 1 — GHDL + GTKWave)
 
-![Formas de onda no GTKWave](imagens/ondas-etapa1.png)
+Rodamos `sim/run_sim.sh` (GHDL: análise → elaboração → execução, gerando
+`fp_adder.ghw`) e inspecionamos os 4 casos do testbench (`sim/fp_adder_tb.vhd`)
+no GTKWave, conforme o roteiro do Lab 1 fornecido pela professora.
 
-_Casos simulados (ver `sim/fp_adder_tb.vhd`):_
+![Visão geral das ondas no GTKWave](imagens/teste-etapa-1-caso-base.png)
 
-| Caso | Descrição | Comportamento do 4º estágio |
-|---|---|---|
-| 1 | soma sem carry | normaliza sem deslocar |
-| 2 | subtração com zeros à esquerda | desloca à esquerda |
-| 3 | subtração pequena demais | resultado = 0 |
-| 4 | soma com carry-out | desloca à direita, `exp+1` |
+_Casos simulados e resultado observado:_
 
-### Código VHDL Final
-O código final está em [`src/fp_adder.vhd`](src/fp_adder.vhd). Os trechos mais
-importantes da adaptação serão destacados aqui na Etapa 2.
+| Caso | Descrição | Entradas (A, B) | Saída esperada (s, e, f) | Resultado | Evidência |
+|---|---|---|---|---|---|
+| 1 | soma sem carry | +0.10100000×2⁴ , +0.10000000×2² | 0, 0100, 11000000 | ✅ OK | [teste-etapa-1-caso-1.png](imagens/teste-etapa-1-caso-1.png) |
+| 2 | subtração, zeros à esquerda → desloca à esquerda | +0.10100000×2⁴ , −0.10000000×2⁴ | 0, 0010, 10000000 | ✅ OK | [teste-etapa-1-caso-2.png](imagens/teste-etapa-1-caso-2.png) |
+| 3 | subtração pequena demais → resultado = 0 | +0.10000000×2¹ , −0.10000000×2¹ | **1**, 0000, 00000000 | ✅ OK (após correção — ver análise abaixo) | [teste-etapa-1-caso-3.png](imagens/teste-etapa-1-caso-3.png) |
+| 4 | soma com carry-out → desloca à direita, `exp+1` | +0.11111111×2⁴ , +0.11111111×2⁴ | 0, 0101, 11111111 | ✅ OK | [teste-etapa-1-caso-4.png](imagens/teste-etapa-1-caso-4.png) |
+
+**Achado de validação — sinal do zero não é canônico:** na primeira rodada, o
+Caso 3 falhou porque o testbench esperava `sign=0`. Investigando o waveform e
+comparando linha a linha com o **Listing 3.19 original do livro**
+(`docs/codigo-fonte-livro-pong-chu.pdf`), confirmamos que:
+
+- `sign_out <= signb;` (linha 107 do livro) nunca é forçado a `0` quando o
+  resultado numérico é zero — só `exp`/`frac` são zerados. Isso é assim **no
+  livro original**, não é um erro da nossa transcrição.
+- Como no Caso 3 as magnitudes de entrada são iguais (`exp&frac` empatados), o
+  1º estágio (comparação `>` estrita) sempre resolve o empate escolhendo o
+  operando 2 como "big" — por isso `sign_out` sai `1`.
+- Conclusão: o algoritmo simplificado do livro **não implementa "zero com
+  sinal canônico"** (diferente do `+0` do IEEE 754). É uma limitação real e
+  documentada do design original, não um bug do circuito.
+
+O valor esperado do testbench foi corrigido para `sign=1` (ver
+`sim/fp_adder_tb.vhd`, Caso 3, e o registro completo em
+[`ia-log/2026-07-24-sessao-02-etapa1-simulacao.md`](ia-log/2026-07-24-sessao-02-etapa1-simulacao.md)).
+
+### Código VHDL Final (Etapa 1)
+`src/fp_adder.vhd` é uma transcrição fiel do Listing 3.19 do livro-texto, **sem
+nenhuma alteração de lógica** — conferida linha a linha nesta etapa
+especificamente por causa do achado acima. Os trechos adaptados para a
+DE10-Lite serão destacados aqui na Etapa 2.
 
 *Etapa 3*
 
@@ -125,11 +179,24 @@ DE10-Lite. O registro completo e cronológico está na pasta
 **Prompts Utilizados:**
 > _(ver `ia-log/` para o registro completo dos prompts)_
 
-**O Erro da IA (Alucinação):**
-> _(a preencher conforme os erros que encontrarmos e corrigirmos)_
+**O Erro da IA (Alucinação) — Etapa 1:**
+> Ao criar o testbench `sim/fp_adder_tb.vhd` (sessão 1), a IA calculou os 4
+> casos de teste, incluindo o Caso 3 (resultado zero), e assumiu — sem
+> verificar contra o livro-texto — que o circuito canonizaria o sinal do zero
+> como `0`, seguindo a convenção do IEEE 754 (`+0`/`-0`). Essa suposição
+> estava errada: o formato simplificado do livro nunca define esse
+> comportamento.
 
 **A Correção Humana:**
-> _(a preencher: como o grupo corrigiu/validou o que a IA gerou)_
+> Rodamos a simulação (Etapa 1) e o Caso 3 falhou. Em vez de aceitar o erro
+> como um problema do circuito, investigamos o waveform no GTKWave e
+> comparamos `src/fp_adder.vhd` linha a linha com o Listing 3.19 original do
+> livro (`docs/codigo-fonte-livro-pong-chu.pdf`), confirmando que nossa
+> transcrição é fiel e que o comportamento observado (`sign_out=1`) é o
+> comportamento correto e esperado do algoritmo publicado. Corrigimos o valor
+> esperado no testbench (não o circuito) e documentamos o achado — ver
+> [`ia-log/2026-07-24-sessao-02-etapa1-simulacao.md`](ia-log/2026-07-24-sessao-02-etapa1-simulacao.md)
+> para a análise completa e as capturas de tela em `imagens/` para a evidência.
 
 ## 6. Contribuição dos participantes
 Taxonomia [CRediT](https://credit.niso.org/):
