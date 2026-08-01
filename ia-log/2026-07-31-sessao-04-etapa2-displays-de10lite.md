@@ -192,19 +192,53 @@ Pinagem errada não gera erro de compilação — a placa apenas não funciona.
 - Confirmar com a professora/Moodle se `hex_to_sseg.vhd` tem versão oficial
   dela diferente da transcrição do livro (pendente desde a sessão 03).
 
+## Etapa 3 — concluída na mesma sessão
+
+Com a Etapa 2 fechada, seguimos direto para a síntese física:
+
+1. Projeto Quartus criado em `quartus/` (`10M50DAF484C7G`, top-level
+   `fp_adder_test`), com `fp_adder.vhd`, `hex_to_sseg.vhd` e
+   `fp_adder_test.vhd`.
+2. Pinagem importada de `docs/DE10_LITE.qsf`, baixado do Moodle pelo grupo.
+   Pinos não utilizados configurados como *"As input tri-stated"*.
+3. Compilação com **0 erros**; gravação na placa via USB-Blaster,
+   `100% Successful`.
+4. Os 4 comportamentos do somador testados no hardware, com ajustes de
+   switches calculados previamente em simulação.
+5. **Polaridade dos botões confirmada na placa física:** com `SW9`/`SW8`
+   levantados, `HEX0` mostra `C` com os botões soltos e `F` com os dois
+   pressionados — exatamente o previsto. Fecha a inferência que a IA tinha
+   feito e que o `.qsf` já indicava.
+
+### Simulação no Questa
+Executada via script `sim/run_questa.do`, para atender ao critério de 100% da
+nota. Dois detalhes que precisaram ser resolvidos e não são óbvios:
+- `vcom -2008` — o testbench usa *external names*, recurso do VHDL-2008;
+- `vsim -voptargs="+acc"` — sem isso o otimizador do Questa elimina
+  `sign_out`/`exp_out`/`frac_out` (sinais internos, sem uso na saída) e os
+  *external names* deixam de resolver.
+
+Os 5 casos passaram com valores **idênticos** aos do GHDL. Dois simuladores
+independentes concordando é verificação adicional: um erro de transcrição no
+testbench apareceria como divergência entre eles. Saída arquivada em
+`sim/resultado-questa.txt`.
+
+**Nota metodológica:** a primeira execução do `.do` foi feita pela IA em modo
+console, apenas para validar o script antes de entregá-lo. O arquivo
+`resultado-questa.txt` versionado é o da execução **do grupo** na interface
+gráfica (31/07, 22:28:45) — a evidência corresponde ao que o grupo de fato
+rodou, não ao teste da ferramenta.
+
 ## Próximos passos
-1. Inspecionar as ondas no GTKWave e capturar os prints para o relatório
-   (`imagens/`), no mesmo padrão da Etapa 1.
-2. Confirmar a polaridade dos `KEY` no manual da placa.
-3. **Etapa 3** (Quartus + placa física, roteiro em
-   `docs/MCTA024_Lab3_2026-2a.pdf`): criar o projeto, atribuir os pinos e
-   ajustar os pinos não utilizados como *"As input tri-stated"* (Fig. 11 do
-   roteiro).
-4. Continua pendente da sessão 03: confirmar com a professora se a
-   "Simulação no Questa validada" (critério de 100% da nota) é adicional ao
-   GHDL ou se o GHDL é aceito como equivalente.
+Registrados em `CONTINUIDADE.md`, seção "ONDE PARAMOS", para retomada em
+casa. Em resumo: fazer o push (pendente), subir as fotos da placa, preencher
+nomes/data/CRediT no README e dar acesso da professora ao repositório.
 
 ## Estado dos arquivos ao final desta sessão
-Trabalho feito em `~/sistemas-digitais-work` (cópia local). **Falta copiar de
-volta para o pen drive e commitar** — o `gh` não está instalado nesta
-máquina, então o push tem que sair de casa.
+Commit `546efdd` em `main`, com 22 arquivos, sincronizado para o pen drive.
+**O push ao GitHub ficou pendente** — o `gh` não está instalado no computador
+da faculdade, então sai de casa com `./salvar.sh`.
+
+A cópia de trabalho local (`~/sistemas-digitais-work`) foi apagada ao final,
+por ser máquina de laboratório compartilhada. O pen drive voltou a ser o
+repositório canônico.

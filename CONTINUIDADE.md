@@ -10,6 +10,94 @@ que você precisa para não travar lá.
 
 ---
 
+## 📍 ONDE PARAMOS — atualizado em 31/07/2026 (sessão na faculdade)
+
+**Etapas 1, 2 e 3 estão fechadas.** Falta documentação.
+
+Último commit: `546efdd` em `main` — *"Etapa 2 corrigida (displays DE10-Lite)
++ Etapa 3 (sintese e gravacao)"*, com 22 arquivos. Árvore limpa.
+
+### ⚠️ PRIMEIRA COISA A FAZER EM CASA
+
+O commit **ainda não foi enviado ao GitHub** — o `gh` não estava instalado no
+computador da faculdade. Antes de qualquer outra coisa:
+
+```bash
+./salvar.sh "sincronizando trabalho da faculdade"
+```
+
+Se der *"Repository not found"*, é a conta errada ativa — o `salvar.sh` já
+troca sozinho, mas veja a seção sobre as duas contas mais abaixo.
+
+### O que foi feito na sessão de 31/07
+
+- **A Etapa 2 estava incompleta e foi corrigida.** O `disp_mux` do livro
+  (multiplexação temporal de displays) não se aplica à DE10-Lite, que liga
+  cada display direto ao FPGA — a saída `an` não tinha onde ser ligada.
+  Removido; o circuito virou combinacional puro. Também corrigidos a largura
+  dos displays (8 bits, com ponto decimal), a ordem dos bits e a polaridade
+  dos `KEY`.
+- **Prova de equivalência:** as duas versões do circuito de teste (livro
+  congelado × adaptada) comparadas nas 4096 combinações de entrada possíveis
+  — zero divergências.
+- **Validado em dois simuladores:** GHDL e Questa, resultados idênticos.
+- **Etapa 3 concluída:** projeto Quartus criado, pinagem importada do
+  `docs/DE10_LITE.qsf`, compilação sem erros, gravação na placa OK, e os 4
+  casos testados no hardware.
+
+### 🔜 PRÓXIMOS PASSOS (em ordem)
+
+1. **`./salvar.sh`** — subir o commit da faculdade para o GitHub (acima).
+2. **Subir as fotos da placa.** Já foram tiradas na faculdade. Colocar em
+   `imagens/` com estes nomes, que a tabela do README já referencia:
+   ```
+   placa-etapa-3-caso-1.png     soma sem carry        (SW8)
+   placa-etapa-3-caso-2.png     carry-out             (SW9)
+   placa-etapa-3-caso-3.png     subtração/normaliz.   (SW9 SW7)
+   placa-etapa-3-caso-4.png     resultado zero        (SW9 SW7 SW5 SW4 SW2 SW0)
+   placa-etapa-3-botoes.png     teste dos KEY (C → F)
+   ```
+   Depois, trocar os `_(a preencher)_` da tabela "Funcionamento na Placa"
+   (README, Etapa 3) pelos links das imagens.
+3. **Preencher os dados do grupo no README:**
+   - cabeçalho: `[Nome do Aluno 1]`, `[Nome do Aluno 2]`, `[Nome do Aluno 3]`
+     e `[Data da entrega]`
+   - seção 6: divisão de contribuições pela taxonomia CRediT
+4. **Dar acesso da professora ao repositório** — ele é **privado**, então sem
+   isso o link no Moodle não abre para ela. Procedimento na seção "Dar acesso
+   à professora", logo abaixo. **Não esqueçam desta.**
+5. **Entregar o link no Moodle.**
+
+### Pendência menor (não bloqueia entrega)
+
+- Confirmar com a professora se `hex_to_sseg.vhd` tem versão oficial dela
+  diferente da transcrição que fizemos do livro (pendente desde a sessão 03).
+
+### Como rodar as coisas (referência rápida)
+
+```bash
+cd sim
+./run_sim.sh                 # Etapa 1 -- 4 casos, somador direto
+./run_sim_etapa2.sh          # Etapa 2 -- 5 casos, circuito da placa
+./run_sim_equivalencia.sh    # equivalência livro x DE10-Lite (4096 casos)
+gtkwave fp_adder_test.ghw    # ver as ondas da Etapa 2
+```
+
+No Questa (aberto pelo Quartus em `Tools → Run Simulation Tool → RTL
+Simulation`), no prompt `Questa>`:
+```tcl
+do <caminho-do-projeto>/sim/run_questa.do
+```
+
+> ⚠️ **Não rode o `fp_adder_equiv_tb` no Questa gráfico** — ele termina com
+> `finish`, que fecha o simulador. Esse teste roda no GHDL.
+
+> 💡 Se rodar do pen drive num Linux, o bit de execução dos `.sh` se perde
+> (FAT não guarda permissão). Se der *"Permission denied"*:
+> `chmod +x sim/*.sh salvar.sh`
+
+---
+
 ## 📇 Dados fixos do projeto (podem ficar salvos, não são segredo)
 
 | Item | Valor |
