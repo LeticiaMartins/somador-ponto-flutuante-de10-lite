@@ -9,10 +9,24 @@
 -- vinha corrompido).
 -- Requerido por fp_adder_test.vhd (Listing 3.20).
 --
--- ATENCAO (Etapa 2/3): este design original multiplexa 4 displays (in0..
--- in3). A DE10-Lite tem 6 displays (HEX0..HEX5) -- avaliar se todos os 6
--- serao usados ou se 4 bastam pro nosso caso (sinal + expoente + 2 digitos
--- de fracao = 4 digitos, como no fp_adder_test original).
+-- =====================================================================
+-- >> ESTE COMPONENTE NAO E MAIS USADO NO PROJETO. <<
+--
+-- Ele existe no livro para ECONOMIZAR PINOS: nas placas Xilinx
+-- (Nexys/Basys) os 4 displays compartilham um unico barramento de 8
+-- segmentos, e o vetor 'an' seleciona qual display esta aceso a cada
+-- instante, varrendo os 4 a ~800 Hz.
+--
+-- A DE10-Lite NAO tem esse arranjo: os 6 displays (HEX0..HEX5) sao
+-- ligados diretamente ao FPGA, cada um com seus proprios pinos. Nao ha
+-- barramento compartilhado nem sinal de anodo, entao a saida 'an' deste
+-- componente nao teria onde ser ligada na placa.
+--
+-- O arquivo foi mantido no repositorio por dois motivos: registrar a
+-- transcricao do livro feita na sessao 03 e servir de material de
+-- comparacao no relatorio (por que o livro precisa dele e nos nao).
+-- Ver o cabecalho de fp_adder_test.vhd e ia-log da sessao 04.
+-- =====================================================================
 -- =====================================================================
 library ieee;
 use ieee.std_logic_1164.all;

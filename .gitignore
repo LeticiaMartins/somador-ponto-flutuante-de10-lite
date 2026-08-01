@@ -1,6 +1,7 @@
 # --- Simulação GHDL/GTKWave ---
 sim/build/
 sim/build_etapa2/
+sim/build_equivalencia/
 *.ghw
 *.vcd
 *.cf
@@ -22,6 +23,8 @@ quartus/greybox_tmp/
 *.pin
 *.pof
 *.sof.bak
+*.qsf.bak
+*.qpf.bak
 
 # --- Sistema operacional ---
 .DS_Store

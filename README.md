@@ -86,7 +86,7 @@ teste (`fp_adder_test.vhd`, Listing 3.20).
 **O que mudamos no VHDL original:**
 * **`exp2` (4 bits):** no livro vinha inteiro dos 4 botões (`btn(3 downto 0)`).
   A DE10-Lite só tem 2 botões físicos, então passamos a montar `exp2` como
-  `sw(9) & sw(8) & key(1) & key(0)` — os **2 switches extras** que a
+  `sw(9) & sw(8) & (not key(1)) & (not key(0))` — os **2 switches extras** que a
   DE10-Lite tem a mais (10 vs 8 do livro) cobrem exatamente os 2 bits que os
   botões que faltam não conseguem mais fornecer. Usa 100% dos switches e
   botões disponíveis, sem tirar capacidade de teste do circuito original.
@@ -95,9 +95,50 @@ teste (`fp_adder_test.vhd`, Listing 3.20).
   os nomes reais dos botões da DE10-Lite (`KEY0`/`KEY1`).
 * **`sign1, exp1, frac1`** (operando fixo) e **`sign2, frac2`** (via
   `sw(7 downto 0)`) **não mudaram** — mesma lógica do livro.
-* **Displays:** mantivemos em 4 (dos 6 disponíveis), igual ao circuito
-  original — sinal + expoente + 2 dígitos de fração. Pode ser estendido
-  para os 6 displays depois.
+* **Displays — a maior mudança estrutural.** O livro usa *multiplexação
+  temporal* (componente `disp_mux`, Listing 4.13): nas placas Xilinx os 4
+  displays compartilham **um único barramento de 8 segmentos**, e o vetor
+  `an` seleciona qual display está aceso a cada instante, varrendo os 4 a
+  ~800 Hz. Isso existe para economizar pinos do FPGA.
+  A DE10-Lite **não tem esse arranjo**: os 6 displays (`HEX0`–`HEX5`) são
+  ligados diretamente ao FPGA, cada um com seus próprios pinos. Não existe
+  barramento compartilhado nem sinal de anodo — a saída `an` do livro
+  não teria onde ser ligada nesta placa. Portanto **removemos o
+  `disp_mux`** e ligamos cada decodificador ao seu display. O resultado é
+  mais simples que o original, e tem um efeito colateral relevante: o
+  circuito perde sua única parte sequencial e o `clk` deixa de ser
+  necessário — **o projeto inteiro passa a ser combinacional puro**.
+* **Ordem dos bits do display.** O livro declara `sseg(7 downto 0)` com
+  `sseg(6)` = segmento *a*, `sseg(0)` = *g* e `sseg(7)` = ponto decimal; a
+  DE10-Lite usa a ordem **oposta**, `HEX0(0)` = *a* … `HEX0(6)` = *g*,
+  `HEX0(7)` = ponto decimal (roteiro `docs/MCTA024_Lab3_2026-2a.pdf`, seção
+  "Seven Segment Display" — a professora cita essa inversão explicitamente
+  como fonte de erro). Ambos são ativos em `'0'`. Como em VHDL a atribuição
+  entre vetores é **posicional** (elemento mais à esquerda para elemento
+  mais à esquerda), `HEX0 <= led0(6 downto 0) & led0(7);` já faz a conversão
+  correta — parece cópia bit a bit, mas não é: é a tradução entre as duas
+  convenções, com o ponto decimal recolocado no fim.
+* **Largura dos displays: 8 bits, não 7.** O texto do roteiro mostra
+  `HEX0 : out std_logic_vector(0 to 6)`, mas o arquivo de pinos oficial
+  ([`docs/DE10_LITE.qsf`](docs/DE10_LITE.qsf), fornecido pela professora)
+  atribui **48 pinos de display** — 6 × 8 bits, incluindo o ponto decimal
+  (`PIN_D15 -to HEX0[7]`). Declaramos os `HEX` com 8 bits para casar com o
+  arquivo dela e aproveitar o ponto decimal, que o `hex_to_sseg` do livro já
+  produz e que marca visualmente a separação entre os campos do resultado.
+* **Nomes das portas em maiúscula** (`SW`, `KEY`, `HEX0`…) para casar
+  literalmente com `docs/DE10_LITE.qsf`. VHDL é *case-insensitive*, então
+  isso não muda nada na simulação — é só para não restar dúvida no Quartus.
+* **Polaridade dos botões.** Os `KEY` da DE10-Lite são **ativos em `'0'`**
+  (solto = `'1'`), ao contrário dos `btn` ativos em `'1'` da placa do
+  livro. Aplicamos `not` aos dois bits de `key` em `exp2`, preservando a
+  semântica original (solto contribui `0`, pressionado contribui `1`).
+  Confirmado por `docs/DE10_LITE.qsf`, que declara os `KEY` com padrão de
+  I/O **"3.3 V Schmitt Trigger"** — botão com tratamento de repique em
+  hardware, ativo em nível baixo. Isso encerra a pendência que estava
+  registrada no `ia-log` da sessão 04.
+* **`HEX4`/`HEX5`:** não são usados pelo circuito, mas são declarados e
+  apagados explicitamente — pino de display sem atribuição fica solto e
+  acende segmentos aleatórios na placa.
 * A versão original (Listing 3.20, sem nenhuma alteração) foi preservada
   como cópia física em
   [`src/fp_adder_test_etapa1_livro.vhd`](src/fp_adder_test_etapa1_livro.vhd)
@@ -113,12 +154,124 @@ teste (`fp_adder_test.vhd`, Listing 3.20).
   desta etapa é só na "casca" (`fp_adder_test`) que conecta switches/botões/
   displays ao `fp_adder`, que continua inalterado.
 
-**Validação pendente:** o testbench novo
-([`sim/fp_adder_test_tb.vhd`](sim/fp_adder_test_tb.vhd)) e o script
-([`sim/run_sim_etapa2.sh`](sim/run_sim_etapa2.sh)) já foram criados e
-conferidos quanto à compilação (GHDL `-a`/`-e`), mas a simulação
-(`-r` + GTKWave) ainda **não foi rodada pelo grupo** — ver `ia-log` da
-sessão 03 para os próximos passos.
+### Simulação (Etapa 2 — GHDL)
+
+Rodamos `sim/run_sim_etapa2.sh`, que instancia o `fp_adder_test` já
+adaptado e observa `sign_out`/`exp_out`/`frac_out` — sinais *internos* do
+wrapper — via *external names* (VHDL-2008). Assim conferimos o resultado
+numérico sem depender da decodificação de 7 segmentos, que fica para a
+Etapa 3 na placa.
+
+![Visão geral das ondas da Etapa 2 no GTKWave](imagens/teste-etapa-2-visao-geral.png)
+
+Nas ondas acima, `sign1`, `exp1` e `frac1` são retas do início ao fim: é a
+evidência visual de que o operando 1 é fixo no hardware (ver
+"Por que o operando 1 é fixo", na Etapa 3). As únicas entradas que variam são
+`exp2` e `sign2` — justamente as que a adaptação para a DE10-Lite reposicionou.
+
+| Caso | O que valida | Estímulo | Resultado (`sign`, `exp`, `frac`) | | Evidência |
+|---|---|---|---|---|---|
+| A | baseline; operando 2 pequeno demais é absorvido | `sw=0`, botões soltos | `0`, `8`, `95` | ✅ | [caso-a](imagens/teste-etapa-2-caso-a.png) |
+| B | `exp2` pelos 2 switches extras (`sw9`,`sw8`) | `sw9=sw8=1` | `0`, `C`, `89` | ✅ | [caso-b](imagens/teste-etapa-2-caso-b.png) |
+| C | `exp2` completado pelos 2 `KEY` (valida a inversão de polaridade) | + ambos `KEY` pressionados | `0`, `F`, `81` | ✅ | [caso-c](imagens/teste-etapa-2-caso-c.png) |
+| D | `sign2` via `sw7`; exercita subtração + normalização | + `sw7=1` | `1`, `E`, `FE` | ✅ | [caso-d](imagens/teste-etapa-2-caso-d.png) |
+| E | `HEX4`/`HEX5` apagados | — | `1111111` | ✅ | (verificado por `assert`) |
+
+Os valores foram conferidos manualmente contra o algoritmo, não só pelos
+`assert`. O Caso D é o mais completo: op2 = −0.10000000×2¹⁵ é o de maior
+magnitude; op1 é alinhado deslocando 7 à direita (`00000001`); os sinais
+diferem, então subtrai (`01111111`); a normalização desloca 1 à esquerda
+(`11111110`) e decrementa o expoente (15−1 = 14 = `E`).
+
+> A simulação termina sozinha em 80 ns: sem o `disp_mux`, o circuito é
+> combinacional e não há gerador de clock produzindo eventos indefinidamente.
+
+### Simulação no Questa (Intel Starter FPGA Edition)
+
+Além do GHDL, a mesma simulação foi executada no **Questa**, que acompanha o
+Quartus, via `Tools → Run Simulation Tool → RTL Simulation`. Script:
+[`sim/run_questa.do`](sim/run_questa.do) — no console do Questa:
+
+```tcl
+do <caminho-do-projeto>/sim/run_questa.do
+```
+
+O script existe porque o Quartus, ao abrir o Questa, compila apenas os
+arquivos **de projeto** (`src/`): os testbenches não fazem parte do projeto
+Quartus, já que não vão para a placa. Ele compila os fontes e o testbench com
+`vcom -2008` (obrigatório — o testbench usa *external names*), elabora com
+`-voptargs="+acc"` (sem isso o otimizador elimina os sinais internos e os
+*external names* deixam de resolver), monta as ondas e roda.
+
+**Resultado: os 5 casos passam, com valores idênticos aos do GHDL.** Ter dois
+simuladores independentes concordando bit a bit é uma verificação a mais: um
+erro de transcrição do testbench ou uma particularidade de um simulador
+apareceria como divergência entre eles.
+
+Saída completa arquivada em
+[`sim/resultado-questa.txt`](sim/resultado-questa.txt); as quatro compilações
+(`vcom`) reportam `Errors: 0, Warnings: 0`, e a simulação:
+
+```
+** Note: Caso A (baseline): sign='0' exp=8 frac=95
+   Time: 20 ns  Iteration: 0  Instance: /fp_adder_test_tb
+** Note: Caso B (exp2 alto via sw9/sw8): sign='0' exp=C frac=89
+   Time: 40 ns  Iteration: 0  Instance: /fp_adder_test_tb
+** Note: Caso C (exp2 completo via switches+KEY): sign='0' exp=F frac=81
+   Time: 60 ns  Iteration: 0  Instance: /fp_adder_test_tb
+** Note: Caso D (sign2 via sw7, operando 2 negativo): sign='1' exp=E frac=FE
+   Time: 80 ns  Iteration: 0  Instance: /fp_adder_test_tb
+** Note: Caso E (HEX4/HEX5 apagados): OK
+** Note: === Fim da simulacao (Etapa 2) ===
+```
+
+![Transcript do Questa com os 5 casos](imagens/questa-etapa-2-transcript.png)
+
+![Ondas no Questa](imagens/questa-etapa-2-ondas.png)
+
+> Os dois únicos warnings da simulação são
+> `NUMERIC_STD.">": metavalue detected` no instante 0, antes de os estímulos
+> assentarem — o comparador do 1º estágio avaliando sinais ainda em `'U'`. São
+> exatamente os mesmos que o GHDL reporta, e somem já no primeiro delta.
+> Nenhum indica problema no circuito.
+
+### Prova de equivalência — a adaptação mudou o resultado?
+
+Os 5 casos acima validam o *roteamento* novo, mas não respondem diretamente à
+pergunta que interessa: **adaptar para a DE10-Lite alterou o que o circuito
+calcula?** Para responder isso construímos
+[`sim/fp_adder_equiv_tb.vhd`](sim/fp_adder_equiv_tb.vhd), que instancia as
+duas versões **lado a lado** —
+[`fp_adder_test_etapa1_livro`](src/fp_adder_test_etapa1_livro.vhd) (Listing
+3.20 congelado) e [`fp_adder_test`](src/fp_adder_test.vhd) (adaptado) — e
+compara `sign_out`/`exp_out`/`frac_out` das duas a cada combinação de entrada.
+
+A varredura é **exaustiva** sobre tudo que o circuito de teste consegue
+variar: 256 valores de `sw(7..0)` × 16 valores de `exp2` = **4096
+combinações**.
+
+```
+=== RESULTADO: EQUIVALENTES. Nenhuma divergencia em 4096 combinacoes. ===
+```
+
+Como os estímulos de `exp2` chegam por caminhos físicos diferentes nas duas
+versões (`btn` ativo em `'1'` no livro, `sw(9)`/`sw(8)` + `KEY` ativo em `'0'`
+na DE10-Lite), esse resultado também valida a inversão de polaridade dos
+botões: se o `not` estivesse errado, as duas versões divergiriam.
+
+> **Por que não repetimos os 4 casos da Etapa 1 aqui?** Porque eles são
+> **inalcançáveis** através do circuito de teste — e isso vale igualmente
+> para a versão do livro. O Listing 3.20 fixa o operando 1 no hardware
+> (`sign1 <= '0'; exp1 <= "1000"; frac1 <= '1' & sw(1) & sw(0) & "10101";`):
+> o expoente é sempre 8 e só 2 bits da fração vêm dos switches. Os casos da
+> Etapa 1 usam `exp1 = 0100`/`0001` e frações como `10100000`, que nenhum
+> ajuste de switches produz. É uma limitação do circuito de teste do livro,
+> não da nossa adaptação — as três linhas são idênticas nas duas versões.
+> A cobertura da matemática do somador continua sendo feita pelo
+> [`sim/fp_adder_tb.vhd`](sim/fp_adder_tb.vhd) da Etapa 1, que aciona o
+> `fp_adder` diretamente, sem passar pelo wrapper; reexecutado nesta etapa,
+> os 4 casos continuam passando (o `fp_adder.vhd` não foi tocado desde a
+> Etapa 1).
 
 ## 4. Evidências de Validação
 
@@ -158,6 +311,33 @@ O valor esperado do testbench foi corrigido para `sign=1` (ver
 `sim/fp_adder_tb.vhd`, Caso 3, e o registro completo em
 [`ia-log/2026-07-24-sessao-02-etapa1-simulacao.md`](ia-log/2026-07-24-sessao-02-etapa1-simulacao.md)).
 
+**Segunda metade do mesmo achado — o expoente do zero também não é canônico.**
+Ao levantar os ajustes de switches para a Etapa 3, encontramos um caso de
+resultado zero que sai com `exp=1` em vez do `exp=0` observado no Caso 3 da
+Etapa 1. A causa está no contador de zeros à esquerda:
+
+```vhdl
+signal leado : unsigned(2 downto 0);        -- linha 36: apenas 3 bits
+...
+elsif (leado > expb) then                   -- linha 108: "pequeno demais" -> zera
+```
+
+`leado` tem 3 bits e conta no máximo **7**, mas a fração tem **8** bits. Quando
+a subtração dá tudo zero, existem 8 zeros à esquerda e o contador satura em 7.
+A partir daí o resultado depende do expoente de entrada:
+
+| Expoente dos operandos | `leado > expb`? | Saída |
+|---|---|---|
+| `expb ≤ 7` (Caso 3 da Etapa 1, `expb=1`) | sim | `exp=0`, `frac=00` |
+| `expb ≥ 8` (ajuste da Etapa 3, `expb=8`) | não | `exp = expb − 7`, `frac=00` |
+
+Numericamente é indiferente — com `frac=00` o valor é zero qualquer que seja o
+expoente. Mas confirma que **o zero não tem representação única** neste
+formato: `0×2⁰` e `0×2¹` são o mesmo número com códigos diferentes. É a mesma
+causa de fundo do achado do sinal: o algoritmo simplificado do livro não
+canoniza o zero, enquanto o IEEE 754 canoniza. Lá era o sinal, aqui é o
+expoente.
+
 ### Código VHDL Final (Etapa 1)
 `src/fp_adder.vhd` é uma transcrição fiel do Listing 3.19 do livro-texto, **sem
 nenhuma alteração de lógica** — conferida linha a linha nesta etapa
@@ -166,8 +346,120 @@ DE10-Lite serão destacados aqui na Etapa 2.
 
 *Etapa 3*
 
+### Por que o operando 1 é fixo no hardware
+
+O circuito de teste do livro fixa o primeiro operando no código:
+
+```vhdl
+sign1 <= '0';
+exp1  <= "1000";
+frac1 <= '1' & sw(1) & sw(0) & "10101";
+```
+
+Isso não é simplificação preguiçosa — é aritmética de pinos. Cada operando
+precisa de **12 bits ajustáveis**: `sign` (1) + `exp` (4) + `frac` (7 — são 8
+bits, mas o mais significativo é sempre `1`, porque o formato é normalizado).
+Dois operandos exigiriam **24 entradas**; a DE10-Lite oferece **12** (10
+switches + 2 botões). Não cabe. O livro dá todos os pinos ao operando 2 e
+solda o operando 1.
+
+Cada pedaço tem uma razão:
+
+* **`exp1 = 1000` (8)** — escolhido por dois motivos. Primeiro, com expoente 8
+  o valor é a própria fração lida como inteiro (`0.10010101 × 2⁸ = 149/256 ×
+  256 = 149`), o que facilita conferir na bancada. Segundo, 8 fica **no meio**
+  da faixa 0–15: assim `exp2` pode ser menor (operando 1 é o maior), igual, ou
+  maior — dando acesso ao alinhamento nos dois sentidos. Com `exp1` em 0 ou 15,
+  metade dos casos seria intestável.
+* **`sign1 = '0'`** — mantendo o operando 1 sempre positivo, `sw(7)` sozinho
+  decide a operação: iguais → soma, diferentes → subtração. Um switch cobre os
+  dois caminhos.
+* **`'1' & sw(1) & sw(0) & "10101"`** — o `'1'` é imposto pelo formato
+  normalizado. `sw(1)` e `sw(0)` são um reaproveitamento esperto: são os bits
+  **menos significativos** do operando 2, então mexer neles altera o operando 2
+  em 1–2 unidades, mas o operando 1 em 32–64, porque lá caem em posições altas.
+  O `"10101"` é enchimento arbitrário — padrão alternado, fácil de reconhecer no
+  display e que evita frações redondas demais, que mascarariam erros de
+  deslocamento.
+
+| `sw1` `sw0` | operando 1 | operando 2 (com `exp2=8`) |
+|---|---|---|
+| `0 0` | `0x95` = 149 | 128 |
+| `0 1` | `0xB5` = 181 | 129 |
+| `1 0` | `0xD5` = 213 | 130 |
+| `1 1` | `0xF5` = 245 | 131 |
+
+**Mantivemos o operando 1 fixo**, igual ao livro. Removê-lo exigiria adicionar
+um registrador e um botão de carga — o que traria o clock de volta (o circuito
+deixaria de ser combinacional), consumiria um pino como botão, e exigiria usar
+`HEX4`/`HEX5` para mostrar o valor guardado. Seria um redesenho do circuito de
+teste, não uma adaptação de placa, e invalidaria a prova de equivalência da
+seção anterior — que só faz sentido enquanto as duas versões são comparáveis.
+
+### Roteiro de demonstração na placa
+
+Mesmo com o operando 1 fixo, **os quatro comportamentos do somador são todos
+alcançáveis pelos switches**. Ajustes verificados em simulação:
+
+| Comportamento | `sw9`…`sw0` | KEYs | Resultado esperado |
+|---|---|---|---|
+| soma sem carry | `0100000000` | soltos | `sign=0` `exp=8` `frac=9D` |
+| soma com **carry-out** | `1000000000` | soltos | `sign=0` `exp=9` `frac=8A` |
+| subtração + deslocamento à esquerda | `1010000000` | soltos | `sign=0` `exp=5` `frac=A8` |
+| resultado **zero** | `1010110101` | soltos | `sign=1` `exp=1` `frac=00` |
+
+No display: `HEX0` mostra o expoente, `HEX2`/`HEX1` os dois dígitos da fração,
+`HEX3` o sinal (traço central aceso = negativo).
+
+### Síntese no Quartus
+
+Projeto criado em `quartus/` com o dispositivo **`10M50DAF484C7G`** e
+`fp_adder_test` como *top-level*. Arquivos de projeto: `fp_adder.vhd`,
+`hex_to_sseg.vhd` e `fp_adder_test.vhd` — `disp_mux.vhd` ficou de fora, pela
+razão explicada na Etapa 2.
+
+A pinagem foi importada de [`docs/DE10_LITE.qsf`](docs/DE10_LITE.qsf)
+(`Assignments → Import Assignments`), o arquivo oficial fornecido pela
+professora na pasta Lab3, e os pinos não utilizados foram configurados como
+**"As input tri-stated"** (`Device and Pin Options`), conforme a Fig. 11 do
+roteiro.
+
+**Compilação:** `0 erros`. Os warnings são atribuições do `.qsf` para
+periféricos que este projeto não usa (`LEDR`, `DRAM`, `VGA`, `GSENSOR`,
+`ARDUINO`…) — o arquivo nomeia a placa inteira e o circuito usa uma parte
+dela. **Gravação:** concluída via USB-Blaster (JTAG), `100% Successful`.
+
+![Gravação concluída no Programmer do Quartus](imagens/quartus-etapa-3-gravacao.png)
+
+### Organização dos displays na placa
+
+```
+HEX5    HEX4    HEX3     HEX2      HEX1      HEX0
+apag.   apag.   sinal    frac↑     frac↓     expoente
+```
+
+`HEX3` fica apagado quando o resultado é positivo e acende apenas o segmento
+central (traço) quando é negativo.
+
 ### Funcionamento na Placa
-Imagens do funcionamento na placa DE10-Lite para os 4 casos. _(a preencher)_
+
+Casos testados na DE10-Lite. Os ajustes vêm da tabela "Roteiro de demonstração
+na placa" acima; os resultados esperados foram calculados em simulação antes
+de ir para o hardware.
+
+| # | Comportamento | Switches para cima | `HEX3` | `HEX2` `HEX1` | `HEX0` | Evidência |
+|---|---|---|---|---|---|---|
+| 1 | soma sem carry | `SW8` | apagado | `9` `D` | `8` | _(a preencher)_ |
+| 2 | soma com **carry-out** | `SW9` | apagado | `8` `A` | `9` | _(a preencher)_ |
+| 3 | subtração + normalização | `SW9` `SW7` | apagado | `A` `8` | `5` | _(a preencher)_ |
+| 4 | resultado **zero** | `SW9` `SW7` `SW5` `SW4` `SW2` `SW0` | **traço** | `0` `0` | `1` | _(a preencher)_ |
+
+**Validação da polaridade dos botões no hardware.** Com `SW9` e `SW8` para
+cima e os botões soltos, `HEX0` mostra `C`; mantendo os switches e
+pressionando `KEY0` e `KEY1` juntos, `HEX0` passa para `F`. Isso confirma na
+placa física o que o `.qsf` indicava e o que a simulação assumia: os `KEY` são
+ativos em `'0'`, e a inversão aplicada em `exp2` está correta. _(a preencher:
+imagem)_
 
 *Etapa 4*
 ## 5. Diário de Bordo de IA
@@ -197,6 +489,39 @@ DE10-Lite. O registro completo e cronológico está na pasta
 > esperado no testbench (não o circuito) e documentamos o achado — ver
 > [`ia-log/2026-07-24-sessao-02-etapa1-simulacao.md`](ia-log/2026-07-24-sessao-02-etapa1-simulacao.md)
 > para a análise completa e as capturas de tela em `imagens/` para a evidência.
+
+**O Erro da IA — Etapa 2:**
+> Ao adaptar o circuito de teste para a DE10-Lite (sessão 03), a IA ajustou
+> switches, botões e larguras de porta, mas manteve o componente `disp_mux`
+> do livro sem questionar se a arquitetura de displays da DE10-Lite era a
+> mesma da placa Xilinx. Ela chegou a anotar no código que "a DE10-Lite tem
+> 6 displays, avaliar se todos serão usados" — tratou como questão de
+> *quantidade* (4 de 6) o que era uma diferença **estrutural**: o livro
+> multiplexa displays no tempo para economizar pinos, a DE10-Lite liga cada
+> display diretamente ao FPGA. A saída `an` do circuito simplesmente não tem
+> onde ser ligada nesta placa. O erro sobreviveu porque a validação daquela
+> sessão foi só de compilação, e o GHDL aceita o circuito sem reclamar — em
+> simulação, `an` é um sinal como outro qualquer. O problema só apareceria na
+> Etapa 3, com a placa na mão.
+
+**A Correção Humana:**
+> O grupo perguntou se uma correção feita no script de simulação valia
+> também para a Etapa 3 — uma pergunta sobre síntese física, não sobre
+> simulação. Foi essa pergunta que levou à revisão do caminho dos displays e
+> à descoberta do problema. Quando a IA propôs rodar os testes da Etapa 2
+> antes de corrigir, o grupo recusou: a Etapa 2 **é** a adaptação para a
+> DE10-Lite, então validar um código que não roda na placa não fecha etapa
+> nenhuma. Corrigimos primeiro e testamos depois. A pinagem foi verificada
+> contra o roteiro da professora (`docs/MCTA024_Lab3_2026-2a.pdf`), não
+> contra a memória do modelo — e é de lá que vem a confirmação de que os
+> displays são `std_logic_vector(0 to 6)`, ativos em `'0'`, com a ordem de
+> bits invertida em relação ao livro. Registro completo em
+> [`ia-log/2026-07-31-sessao-04-etapa2-displays-de10lite.md`](ia-log/2026-07-31-sessao-04-etapa2-displays-de10lite.md).
+>
+> **Lição metodológica:** "compila" e "simula" não provam que o circuito é
+> sintetizável *naquela placa*. Diferenças de arquitetura de I/O são
+> invisíveis no GHDL. Cada componente herdado do livro precisa ser revisado
+> perguntando *por que ele existe*, não só *se ele compila*.
 
 ## 6. Contribuição dos participantes
 Taxonomia [CRediT](https://credit.niso.org/):

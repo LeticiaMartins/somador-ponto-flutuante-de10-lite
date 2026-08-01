@@ -1,0 +1,59 @@
+===============================================================
+ resultado-questa.txt -- saida da simulacao da Etapa 2 no Questa
+ Questa Intel Starter FPGA Edition-64 2024.3 (vem com o Quartus)
+ Aberto por: Quartus -> Tools -> Run Simulation Tool -> RTL Simulation
+ Executado por: do sim/run_questa.do
+ Execucao do grupo em 2026-07-31, 22:28:45
+
+ Os mesmos 5 casos rodados no GHDL, com resultados identicos.
+===============================================================
+
+== projeto : /home/ufabc/sistemas-digitais-work
+== fontes  : /home/ufabc/sistemas-digitais-work/src
+== testes  : /home/ufabc/sistemas-digitais-work/sim
+0
+** Warning: (vlib-34) Library already exists at "work".
+Errors: 0, Warnings: 1
+Questa Intel Starter FPGA Edition-64 vmap 2024.3 Lib Mapping Utility 2024.09 Sep 10 2024
+vmap work work 
+Modifying modelsim.ini
+Questa Intel Starter FPGA Edition-64 vcom 2024.3 Compiler 2024.09 Sep 10 2024
+Start time: 22:28:45 on Jul 31,2026
+vcom -reportprogress 300 -2008 /home/ufabc/sistemas-digitais-work/src/hex_to_sseg.vhd 
+End time: 22:28:45 on Jul 31,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Questa Intel Starter FPGA Edition-64 vcom 2024.3 Compiler 2024.09 Sep 10 2024
+Start time: 22:28:45 on Jul 31,2026
+vcom -reportprogress 300 -2008 /home/ufabc/sistemas-digitais-work/src/fp_adder.vhd 
+End time: 22:28:45 on Jul 31,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Questa Intel Starter FPGA Edition-64 vcom 2024.3 Compiler 2024.09 Sep 10 2024
+Start time: 22:28:45 on Jul 31,2026
+vcom -reportprogress 300 -2008 /home/ufabc/sistemas-digitais-work/src/fp_adder_test.vhd 
+End time: 22:28:45 on Jul 31,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+Questa Intel Starter FPGA Edition-64 vcom 2024.3 Compiler 2024.09 Sep 10 2024
+Start time: 22:28:45 on Jul 31,2026
+vcom -reportprogress 300 -2008 /home/ufabc/sistemas-digitais-work/sim/fp_adder_test_tb.vhd 
+End time: 22:28:45 on Jul 31,2026, Elapsed time: 0:00:00
+Errors: 0, Warnings: 0
+vsim -voptargs=""+acc"" work.fp_adder_test_tb 
+Start time: 22:28:45 on Jul 31,2026
+** Note: (vsim-8009) Loading existing optimized design _opt
+** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+   Time: 0 ns  Iteration: 0  Instance: /fp_adder_test_tb/dut/fp_add_unit
+** Warning: NUMERIC_STD.">": metavalue detected, returning FALSE
+   Time: 0 ns  Iteration: 1  Instance: /fp_adder_test_tb/dut/fp_add_unit
+** Note: Caso A (baseline): sign='0' exp=8 frac=95
+   Time: 20 ns  Iteration: 0  Instance: /fp_adder_test_tb
+** Note: Caso B (exp2 alto via sw9/sw8): sign='0' exp=C frac=89
+   Time: 40 ns  Iteration: 0  Instance: /fp_adder_test_tb
+** Note: Caso C (exp2 completo via switches+KEY): sign='0' exp=F frac=81
+   Time: 60 ns  Iteration: 0  Instance: /fp_adder_test_tb
+** Note: Caso D (sign2 via sw7, operando 2 negativo): sign='1' exp=E frac=FE
+   Time: 80 ns  Iteration: 0  Instance: /fp_adder_test_tb
+** Note: Caso E (HEX4/HEX5 apagados): OK
+   Time: 80 ns  Iteration: 0  Instance: /fp_adder_test_tb
+** Note: === Fim da simulacao (Etapa 2) ===
+   Time: 80 ns  Iteration: 0  Instance: /fp_adder_test_tb
+=== Simulacao concluida. Confira os 5 casos no Transcript. ===
