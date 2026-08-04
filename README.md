@@ -6,7 +6,7 @@
 
 **Professora:** Victoria Alejandra Herrera
 
-**Data:** [Data da entrega]
+**Data:** 07/08/2026
 
 ---
 
