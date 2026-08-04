@@ -447,19 +447,34 @@ Casos testados na DE10-Lite. Os ajustes vêm da tabela "Roteiro de demonstraçã
 na placa" acima; os resultados esperados foram calculados em simulação antes
 de ir para o hardware.
 
+Com o bitstream gravado e todos os switches para baixo, a placa parte do estado
+inicial mostrando `958` (`HEX0 = 8`, fração `95`), o operando padrão do circuito:
+
+![Placa gravada, estado inicial (958)](imagens/placa-etapa-3-baseline.jpg)
+
 | # | Comportamento | Switches para cima | `HEX3` | `HEX2` `HEX1` | `HEX0` | Evidência |
 |---|---|---|---|---|---|---|
-| 1 | soma sem carry | `SW8` | apagado | `9` `D` | `8` | _(a preencher)_ |
-| 2 | soma com **carry-out** | `SW9` | apagado | `8` `A` | `9` | _(a preencher)_ |
-| 3 | subtração + normalização | `SW9` `SW7` | apagado | `A` `8` | `5` | _(a preencher)_ |
-| 4 | resultado **zero** | `SW9` `SW7` `SW5` `SW4` `SW2` `SW0` | **traço** | `0` `0` | `1` | _(a preencher)_ |
+| 1 | soma sem carry | `SW8` | apagado | `9` `D` | `8` | [caso-1](imagens/placa-etapa-3-caso-1.jpg) |
+| 2 | soma com **carry-out** | `SW9` | apagado | `8` `A` | `9` | [caso-2](imagens/placa-etapa-3-caso-2.jpg) |
+| 3 | subtração + normalização | `SW9` `SW7` | apagado | `A` `8` | `5` | [caso-3](imagens/placa-etapa-3-caso-3.jpg) |
+| 4 | resultado **zero** | `SW9` `SW7` `SW5` `SW4` `SW2` `SW0` | **traço** | `0` `0` | `1` | [caso-4](imagens/placa-etapa-3-caso-4.jpg) |
+
+As leituras nos displays confirmam os valores esperados (`HEX3` sinal · `HEX2 HEX1`
+fração · `HEX0` expoente): Caso 1 → `9D8`, Caso 2 → `8A9`, Caso 3 → `A85`,
+Caso 4 → `-001` (o traço em `HEX3` sinaliza o resultado negativo/zero).
+
+![Caso 1 — soma sem carry (9D8)](imagens/placa-etapa-3-caso-1.jpg)
+![Caso 4 — resultado zero (-001)](imagens/placa-etapa-3-caso-4.jpg)
 
 **Validação da polaridade dos botões no hardware.** Com `SW9` e `SW8` para
 cima e os botões soltos, `HEX0` mostra `C`; mantendo os switches e
 pressionando `KEY0` e `KEY1` juntos, `HEX0` passa para `F`. Isso confirma na
 placa física o que o `.qsf` indicava e o que a simulação assumia: os `KEY` são
-ativos em `'0'`, e a inversão aplicada em `exp2` está correta. _(a preencher:
-imagem)_
+ativos em `'0'`, e a inversão aplicada em `exp2` está correta. No display isso
+aparece como `89C` (soltos) → `81F` (pressionados):
+
+![Botões soltos — HEX0 = C (89C)](imagens/placa-etapa-3-botoes-c.jpg)
+![KEY0+KEY1 pressionados — HEX0 = F (81F)](imagens/placa-etapa-3-botoes-f.jpg)
 
 *Etapa 4*
 ## 5. Diário de Bordo de IA
