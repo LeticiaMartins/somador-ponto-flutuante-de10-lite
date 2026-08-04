@@ -1,6 +1,6 @@
 # Tutorial: Implementação de Somador Ponto Flutuante na DE10-Lite
 
-**Autores:** [Nome do Aluno 1], [Nome do Aluno 2], [Nome do Aluno 3]
+**Autores:** Leticia Martins Bandeira Pascale, Renan Henrique Ferreira Monteiro, Pedro Henrique Fernandes Casa Grandi
 
 **Disciplina:** Sistemas Digitais (MCTA024) — Q2.2026
 
@@ -524,7 +524,23 @@ DE10-Lite. O registro completo e cronológico está na pasta
 > perguntando *por que ele existe*, não só *se ele compila*.
 
 ## 6. Contribuição dos participantes
-Taxonomia [CRediT](https://credit.niso.org/):
- * **[Nome do Aluno 1]** — Administração do Projeto, Desenvolvimento de software, Análise Formal
- * **[Nome do Aluno 2]** — Validação de dados e experimentos
- * **[Nome do Aluno 3]** — Redação do manuscrito original, Validação de dados e experimentos
+
+O trabalho foi desenvolvido de forma **totalmente colaborativa**: os três
+integrantes se reuniram presencialmente no laboratório e conduziram todas as
+etapas juntos — desde o entendimento do VHDL original e a simulação, passando
+pela adaptação para a DE10-Lite, até a síntese, gravação na placa e a redação
+deste relatório. Por isso, seguindo a taxonomia [CRediT](https://credit.niso.org/),
+os mesmos papéis são atribuídos aos três autores:
+
+ * **Leticia Martins Bandeira Pascale** — Conceituação, Metodologia,
+   Desenvolvimento de software, Validação, Análise Formal, Investigação,
+   Redação (rascunho original), Redação (revisão e edição),
+   Administração do projeto.
+ * **Renan Henrique Ferreira Monteiro** — Conceituação, Metodologia,
+   Desenvolvimento de software, Validação, Análise Formal, Investigação,
+   Redação (rascunho original), Redação (revisão e edição),
+   Administração do projeto.
+ * **Pedro Henrique Fernandes Casa Grandi** — Conceituação, Metodologia,
+   Desenvolvimento de software, Validação, Análise Formal, Investigação,
+   Redação (rascunho original), Redação (revisão e edição),
+   Administração do projeto.
