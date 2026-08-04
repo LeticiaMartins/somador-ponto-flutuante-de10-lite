@@ -10,24 +10,21 @@ que você precisa para não travar lá.
 
 ---
 
-## 📍 ONDE PARAMOS — atualizado em 31/07/2026 (sessão na faculdade)
+## 📍 ONDE PARAMOS — atualizado em 04/08/2026 (em casa)
 
-**Etapas 1, 2 e 3 estão fechadas.** Falta documentação.
+**Etapas 1, 2 e 3 estão fechadas. As fotos da placa já estão no relatório.**
+Falta só a entrega em si (acesso da professora + link no Moodle).
 
-Último commit: `546efdd` em `main` — *"Etapa 2 corrigida (displays DE10-Lite)
-+ Etapa 3 (sintese e gravacao)"*, com 22 arquivos. Árvore limpa.
+Último commit: `82fa76b` em `main` — *"Etapa 4: fotos da placa (Etapa 3) no
+relatorio + diario sessao 05"*. Casa = pen drive = GitHub, todos sincronizados,
+árvore limpa.
 
-### ⚠️ PRIMEIRA COISA A FAZER EM CASA
-
-O commit **ainda não foi enviado ao GitHub** — o `gh` não estava instalado no
-computador da faculdade. Antes de qualquer outra coisa:
-
-```bash
-./salvar.sh "sincronizando trabalho da faculdade"
-```
-
-Se der *"Repository not found"*, é a conta errada ativa — o `salvar.sh` já
-troca sozinho, mas veja a seção sobre as duas contas mais abaixo.
+As 7 fotos da DE10-Lite (`IMG_9591`–`9597`) foram redimensionadas e salvas em
+`imagens/placa-etapa-3-*.jpg` (sem rotacionar, como as fotos foram tiradas) e
+ligadas à tabela "Funcionamento na Placa" e à validação dos botões no README.
+Mapeamento (confirmado pelo grupo pelas leituras dos displays):
+`958`=estado inicial · `9D8`=Caso 1 · `8A9`=Caso 2 · `A85`=Caso 3 ·
+`-001`=Caso 4 · `89C`/`81F`=botões (C→F).
 
 ### O que foi feito na sessão de 31/07
 
@@ -45,28 +42,15 @@ troca sozinho, mas veja a seção sobre as duas contas mais abaixo.
   `docs/DE10_LITE.qsf`, compilação sem erros, gravação na placa OK, e os 4
   casos testados no hardware.
 
-### 🔜 PRÓXIMOS PASSOS (em ordem)
+### 🔜 PRÓXIMOS PASSOS (em ordem) — só falta a entrega
 
-1. **`./salvar.sh`** — subir o commit da faculdade para o GitHub (acima).
-2. **Subir as fotos da placa.** Já foram tiradas na faculdade. Colocar em
-   `imagens/` com estes nomes, que a tabela do README já referencia:
-   ```
-   placa-etapa-3-caso-1.png     soma sem carry        (SW8)
-   placa-etapa-3-caso-2.png     carry-out             (SW9)
-   placa-etapa-3-caso-3.png     subtração/normaliz.   (SW9 SW7)
-   placa-etapa-3-caso-4.png     resultado zero        (SW9 SW7 SW5 SW4 SW2 SW0)
-   placa-etapa-3-botoes.png     teste dos KEY (C → F)
-   ```
-   Depois, trocar os `_(a preencher)_` da tabela "Funcionamento na Placa"
-   (README, Etapa 3) pelos links das imagens.
-3. **Preencher os dados do grupo no README:**
-   - cabeçalho: `[Nome do Aluno 1]`, `[Nome do Aluno 2]`, `[Nome do Aluno 3]`
-     e `[Data da entrega]`
-   - seção 6: divisão de contribuições pela taxonomia CRediT
-4. **Dar acesso da professora ao repositório** — ele é **privado**, então sem
+✅ Fotos da placa no relatório — **feito** (commit `82fa76b`).
+✅ Nomes do grupo + data (07/08/2026) + tabela CRediT no README — **feito**.
+
+1. **Dar acesso da professora ao repositório** — ele é **privado**, então sem
    isso o link no Moodle não abre para ela. Procedimento na seção "Dar acesso
    à professora", logo abaixo. **Não esqueçam desta.**
-5. **Entregar o link no Moodle.**
+2. **Entregar o link no Moodle** (entrega em **07/08/2026**).
 
 ### Pendência menor (não bloqueia entrega)
 
