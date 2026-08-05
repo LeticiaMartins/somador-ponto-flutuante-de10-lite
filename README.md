@@ -17,8 +17,7 @@
 > ├── quartus/            Projeto Intel Quartus (Etapa 3)
 > ├── docs/               PDFs de referência do projeto
 > ├── imagens/            Prints de ondas e da placa para o relatório
-> ├── ia-log/             Diário de bordo do uso de IA (auditoria)
-> └── CONTINUIDADE.md     Como retomar o projeto em outra máquina (pen drive)
+> └── ia-log/             Diário de bordo do uso de IA (auditoria)
 > ```
 
 ---
@@ -59,8 +58,8 @@ gtkwave fp_adder.ghw         # abrir as ondas da Etapa 1 (ou fp_adder_test.ghw)
 (Etapa 3): cada linha diz quais `SW`/`KEY` acionar e o que deve aparecer nos
 displays.
 
-> Se rodar do pen drive num Linux, o bit de execução dos `.sh` pode se perder
-> (FAT não guarda permissão): `chmod +x sim/*.sh salvar.sh`.
+> Se os scripts `.sh` não tiverem permissão de execução, rode antes:
+> `chmod +x sim/*.sh`.
 
 ---
 *Etapa 1*
@@ -601,8 +600,7 @@ prompt que a iniciou; os principais foram:
 > - *Sessão 01 (setup):* "Vamos planejar o desenvolvimento do trabalho de
 >   Sistemas Digitais. Leia os dois PDFs, crie o repositório no GitHub com os
 >   arquivos-base (ex: template do relatório), vá atualizando o relatório com o
->   que fizermos e sirva de guia. A pasta vai para um pen drive para rodar no PC
->   da faculdade; salve as informações para continuar em outra máquina."
+>   que fizermos e sirva de guia."
 > - *Sessão 02 (Etapa 1):* "Simular o VHDL original do somador no GHDL e conferir
 >   os 4 casos do testbench contra o resultado esperado do livro."
 > - *Sessão 03 (Etapa 2):* "Faltam os componentes `hex_to_sseg` e `disp_mux` que
