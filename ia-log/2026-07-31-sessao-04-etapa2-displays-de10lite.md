@@ -12,6 +12,11 @@
 
 ---
 
+## Prompt inicial da sessão
+> "Essa correção que fizemos no script de simulação vale também para a Etapa 3
+> (gravação na placa)?" Foi essa pergunta que expôs o problema do `disp_mux`:
+> ao investigar, percebemos que a adaptação da Etapa 2 estava incompleta.
+
 ## Objetivo da sessão
 Retomar o projeto no computador da faculdade e rodar a simulação da Etapa 2,
 pendente desde a sessão 03. O que era para ser uma sessão de execução virou

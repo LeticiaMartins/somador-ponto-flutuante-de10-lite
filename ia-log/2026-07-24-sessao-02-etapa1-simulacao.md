@@ -10,6 +10,10 @@
 
 ---
 
+## Prompt inicial da sessão
+> "Simular o VHDL original do somador (`fp_adder`) no GHDL e conferir os 4 casos
+> do testbench contra o resultado esperado do livro, antes de mexer no hardware."
+
 ## Objetivo da sessão
 Rodar a simulação do `fp_adder` (Etapa 1: "comprovar que o algoritmo matemático
 funciona antes de alterar o hardware") e conferir na mão os 4 casos de teste do

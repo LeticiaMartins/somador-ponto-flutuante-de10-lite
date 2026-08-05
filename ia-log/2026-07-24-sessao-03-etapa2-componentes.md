@@ -10,6 +10,11 @@
 
 ---
 
+## Prompt inicial da sessão
+> "Faltam os componentes `hex_to_sseg` e `disp_mux` que o `fp_adder_test` usa.
+> Onde estão, e como adaptar o circuito de teste (switches, botões e displays)
+> para a DE10-Lite?"
+
 ## Objetivo da sessão
 Resolver a dependência pendente desde a sessão 01: `fp_adder_test.vhd`
 (Listing 3.20) instancia `hex_to_sseg` e `disp_mux`, que não estavam em

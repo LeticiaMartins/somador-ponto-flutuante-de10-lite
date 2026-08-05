@@ -22,6 +22,47 @@
 > ```
 
 ---
+
+## Como reproduzir do zero
+
+Estes são todos os passos para refazer o projeto a partir de uma máquina limpa.
+Uma pessoa sem contato prévio com o projeto consegue chegar ao mesmo resultado
+seguindo só o que está abaixo.
+
+**1. Clonar o repositório**
+```bash
+git clone https://github.com/LeticiaMartins/somador-ponto-flutuante-de10-lite.git
+cd somador-ponto-flutuante-de10-lite
+```
+
+**2. Simulação (Etapas 1 e 2), precisa de GHDL + GTKWave**
+```bash
+sudo apt update && sudo apt install -y ghdl gtkwave   # Ubuntu/Debian
+cd sim
+./run_sim.sh                 # Etapa 1: 4 casos do somador (fp_adder)
+./run_sim_etapa2.sh          # Etapa 2: circuito completo da placa (fp_adder_test)
+./run_sim_equivalencia.sh    # prova de equivalência livro × DE10-Lite (4096 casos)
+gtkwave fp_adder.ghw         # abrir as ondas da Etapa 1 (ou fp_adder_test.ghw)
+```
+
+**3. Síntese e gravação (Etapa 3), precisa do Intel Quartus Prime + Questa**
+1. Abrir `quartus/fp_adder_test.qpf` no Quartus.
+2. **Assignments → Import Assignments** e escolher `docs/DE10_LITE.qsf` (pinagem
+   oficial da placa).
+3. **Processing → Start Compilation** (deve terminar com **0 erros**).
+4. Conectar a DE10-Lite pelo USB-Blaster e **Tools → Programmer → Start** para
+   gravar o `.sof`.
+5. Simulação no Questa: **Tools → Run Simulation Tool → RTL Simulation** e, no
+   console `Questa>`, rodar `do <caminho-do-projeto>/sim/run_questa.do`.
+
+**4. Testar na placa.** Use os estímulos da tabela "Funcionamento na Placa"
+(Etapa 3): cada linha diz quais `SW`/`KEY` acionar e o que deve aparecer nos
+displays.
+
+> Se rodar do pen drive num Linux, o bit de execução dos `.sh` pode se perder
+> (FAT não guarda permissão): `chmod +x sim/*.sh salvar.sh`.
+
+---
 *Etapa 1*
 ## 1. Objetivo do Projeto
 Este projeto adapta o somador de ponto flutuante simplificado (13 bits) do
@@ -148,6 +189,37 @@ teste (`fp_adder_test.vhd`, Listing 3.20).
   estavam nos PDFs do projeto, foram localizados e transcritos do
   livro-texto completo (Listings 3.12 e 4.13); ver
   [`ia-log/2026-07-24-sessao-03-etapa2-componentes.md`](ia-log/2026-07-24-sessao-03-etapa2-componentes.md).
+
+**Trecho adaptado, lado a lado.** Todas as mudanças de código se concentram nas
+portas da entidade e em **uma única linha de lógica** (`exp2`). O resto do
+`fp_adder_test` é idêntico ao livro.
+
+Original (Listing 3.20, `src/fp_adder_test_etapa1_livro.vhd`):
+
+```vhdl
+sw   : in  std_logic_vector(7 downto 0);   -- 8 switches
+btn  : in  std_logic_vector(3 downto 0);   -- 4 botões
+...
+sign2 <= sw(7);
+exp2  <= btn;                              -- expoente do op.2 vem dos 4 botões
+frac2 <= '1' & sw(6 downto 0);
+```
+
+Adaptado para a DE10-Lite (`src/fp_adder_test.vhd`):
+
+```vhdl
+SW   : in  std_logic_vector(9 downto 0);   -- 10 switches
+KEY  : in  std_logic_vector(1 downto 0);   -- 2 botões (ativos em '0')
+...
+sign2 <= sw(7);
+exp2  <= sw(9) & sw(8) & (not key(1)) & (not key(0));
+--       \___ 2 switches extras ___/   \___ 2 KEY, polaridade invertida ___/
+frac2 <= '1' & sw(6 downto 0);
+```
+
+As linhas de `sign1/exp1/frac1`, `sign2` e `frac2` permanecem **iguais**: a
+adaptação é cirúrgica e é exatamente isso que a prova de equivalência (adiante)
+confirma numericamente.
 
 **Descrição gráfica do sistema**
 * Sem mudança na estrutura dos 4 estágios do somador (item 2), a adaptação
@@ -476,6 +548,46 @@ aparece como `89C` (soltos) → `81F` (pressionados):
 ![Botões soltos, HEX0 = C (89C)](imagens/placa-etapa-3-botoes-c.jpg)
 ![KEY0+KEY1 pressionados, HEX0 = F (81F)](imagens/placa-etapa-3-botoes-f.jpg)
 
+### Interpretação numérica: decimal → binário de 13 bits → decimal
+
+Validar o circuito é mais do que "acender o display": é mostrar que dominamos a
+tradução **nos dois sentidos**, do número decimal para o formato normalizado de
+13 bits que entra pelos switches, e do binário exibido de volta para o decimal.
+Cada valor no formato vale:
+
+> **valor = (−1)ˢ × 0.f × 2ᵉ = (−1)ˢ × f × 2⁽ᵉ⁻⁸⁾**   (`f` de 8 bits, `0.f = f/256`)
+
+**Ida (decimal → normalizado → 13 bits).** O operando 1 é fixo
+(`sign=0`, `exp=1000`, `frac=1·sw1·sw0·10101`); o operando 2 vem dos switches
+(`sign=sw7`, `exp2=sw9 sw8 0 0` com os botões soltos, `frac2=1·sw6…sw0`).
+Para o Caso 1 (só `SW8` para cima):
+
+| Operando | decimal | normalizado | binário 13 bits (`s eeee ffffffff`) |
+|---|---|---|---|
+| Op1 | 149 | 0.10010101 × 2⁸ | `0 1000 10010101` |
+| Op2 | +8 | 0.10000000 × 2⁴ | `0 0100 10000000` |
+
+**Volta (binário exibido → decimal).** O display mostra `9D8`, ou seja `exp=8`
+e `frac=0x9D=10011101`, que vale `0.10011101 × 2⁸ = 157/256 × 256 = 157`. E de
+fato **149 + 8 = 157** ✔. O caminho de volta bate com a conta decimal.
+
+A tabela abaixo fecha esse ciclo para os quatro casos testados na placa:
+
+| Caso | Op1 (dec) | Op2 (dec) | Conta decimal | Display | Binário do resultado (`s eeee ffffffff`) | Volta p/ decimal | Confere |
+|---|---|---|---|---|---|---|---|
+| 1 · soma sem carry | 149 | +8 | 149 + 8 = 157 | `9D8` | `0 1000 10011101` | 0.10011101 × 2⁸ = 157 | ✔ |
+| 2 · carry-out | 149 | +128 | 149 + 128 = 277 | `8A9` | `0 1001 10001010` | 0.10001010 × 2⁹ = 276 | ✔ (¹) |
+| 3 · subtração | 149 | −128 | 149 − 128 = 21 | `A85` | `0 0101 10101000` | 0.10101000 × 2⁵ = 21 | ✔ |
+| 4 · resultado zero | 181 | −181 | 181 − 181 = 0 | `-001` | `1 0001 00000000` | 0 | ✔ (²) |
+
+(¹) A soma exata é 277, mas o resultado exibido é **276**: o *carry-out* força um
+deslocamento à direita e o bit menos significativo (peso 1) é truncado. É o
+comportamento correto da aritmética de fração de 8 bits do formato, não um erro.
+
+(²) `181 − 181 = 0`, mas o display mostra `-001` (sinal aceso, `exp=1`) em vez de
+`+000`. É exatamente o **zero não-canônico** analisado na Seção 4: o formato
+simplificado do livro não força o sinal nem o expoente do zero.
+
 *Etapa 4*
 ## 5. Diário de Bordo de IA
 Utilizamos o **Claude (Anthropic)** para auxiliar no entendimento do código,
@@ -483,8 +595,24 @@ na geração do testbench, na organização do repositório e na adaptação par
 DE10-Lite. O registro completo e cronológico está na pasta
 [`ia-log/`](ia-log/). Abaixo, a análise crítica.
 
-**Prompts Utilizados:**
-> _(ver `ia-log/` para o registro completo dos prompts)_
+**Prompts utilizados (representativos).** Cada sessão do `ia-log/` abre com o
+prompt que a iniciou; os principais foram:
+
+> - *Sessão 01 (setup):* "Vamos planejar o desenvolvimento do trabalho de
+>   Sistemas Digitais. Leia os dois PDFs, crie o repositório no GitHub com os
+>   arquivos-base (ex: template do relatório), vá atualizando o relatório com o
+>   que fizermos e sirva de guia. A pasta vai para um pen drive para rodar no PC
+>   da faculdade; salve as informações para continuar em outra máquina."
+> - *Sessão 02 (Etapa 1):* "Simular o VHDL original do somador no GHDL e conferir
+>   os 4 casos do testbench contra o resultado esperado do livro."
+> - *Sessão 03 (Etapa 2):* "Faltam os componentes `hex_to_sseg` e `disp_mux` que
+>   o `fp_adder_test` usa. Onde estão e como adaptar o circuito de teste para os
+>   switches, botões e displays da DE10-Lite?"
+> - *Sessão 04 (Etapa 2, correção):* "Essa correção que fizemos no script de
+>   simulação vale também para a Etapa 3 (gravação na placa)?" (foi essa pergunta
+>   que destravou o erro do `disp_mux`).
+> - *Sessão 05 (Etapa 4):* "Preencher os nomes do grupo e a tabela CRediT",
+>   "A entrega é 07/08", "Adicionar as fotos da placa ao relatório".
 
 **O Erro da IA (Alucinação), Etapa 1:**
 > Ao criar o testbench `sim/fp_adder_tb.vhd` (sessão 1), a IA calculou os 4
@@ -537,6 +665,31 @@ DE10-Lite. O registro completo e cronológico está na pasta
 > sintetizável *naquela placa*. Diferenças de arquitetura de I/O são
 > invisíveis no GHDL. Cada componente herdado do livro precisa ser revisado
 > perguntando *por que ele existe*, não só *se ele compila*.
+
+**Onde concordamos com a IA e o que aprendemos.** O diário acima destaca os
+pontos em que corrigimos a IA, mas boa parte das sugestões nós **aceitamos por
+concordar com o raciocínio**, e não sem entender:
+
+- **Montar `exp2` com os 2 switches extras + os 2 `KEY` invertidos.** A IA propôs
+  `sw(9) & sw(8) & (not key(1)) & (not key(0))`. Concordamos depois de verificar
+  no `docs/DE10_LITE.qsf` que os `KEY` são ativos em `'0'`; ficou claro *por que*
+  o `not` é necessário. Aprendemos a ler polaridade de I/O a partir do arquivo de
+  pinos, e não por tentativa e erro na placa.
+- **Remover o `disp_mux`.** A princípio parecia que estávamos "jogando código
+  fora". Ao entender que a multiplexação temporal só existe para economizar pinos
+  em placas que compartilham barramento, e que a DE10-Lite liga cada display
+  direto ao FPGA, concordamos: o circuito ficou mais simples *e* mais correto.
+  Aprendemos que herdar um componente do livro sem questionar sua razão de ser
+  pode carregar uma dependência que nem existe na plataforma nova.
+- **Prova de equivalência por força bruta (4096 casos).** Aceitamos a ideia de
+  comparar a versão do livro com a adaptada em *todas* as entradas possíveis, em
+  vez de conferir só alguns casos. Aprendemos que, quando o espaço de entrada é
+  pequeno, o teste exaustivo é mais convincente do que casos escolhidos a dedo.
+
+Em todas essas decisões o critério foi o mesmo: só adotamos a sugestão depois de
+conseguir explicá-la com as nossas palavras e conferir contra a fonte oficial
+(livro ou roteiro da professora). A IA acelerou o trabalho; a conferência foi
+sempre nossa.
 
 ## 6. Contribuição dos participantes
 
