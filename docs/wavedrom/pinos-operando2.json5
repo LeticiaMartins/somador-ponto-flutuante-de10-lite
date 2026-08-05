@@ -1,0 +1,19 @@
+// Aritmetica de pinos - Operando 2 (fp_adder_test.vhd, DE10-Lite).
+//   sign2 <= sw(7);
+//   exp2  <= sw(9) & sw(8) & (not key(1)) & (not key(0));
+//   frac2 <= '1' & sw(6 downto 0);
+// Operando 2 e totalmente ajustavel. O expoente reaproveita SW9/SW8 (os 2
+// switches que a DE10-Lite tem a mais) para cobrir os 2 bits que os botoes
+// que faltam (o livro usava 4 botoes; a placa so tem KEY0/KEY1) nao dao mais.
+// KEY sao ativo-baixo, por isso "not key". Cores: type 4 = switch, 5 = botao.
+// Renderizar: npx wavedrom-cli -i pinos-operando2.json5 -s pinos-operando2.svg
+{ reg: [
+  { bits: 7, name: "SW6..SW0", attr: "frac [6:0]",  type: 4 },
+  { bits: 1, name: "1",        attr: "norm.",        type: 2 },
+  { bits: 1, name: "¬KEY0",                          type: 5 },
+  { bits: 1, name: "¬KEY1",                          type: 5 },
+  { bits: 1, name: "SW8",                            type: 4 },
+  { bits: 1, name: "SW9",                            type: 4 },
+  { bits: 1, name: "SW7",      attr: "sign",         type: 4 },
+],
+  config: { bits: 13, lanes: 1, hspace: 1000 } }

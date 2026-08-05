@@ -58,6 +58,15 @@ gtkwave fp_adder.ghw         # abrir as ondas da Etapa 1 (ou fp_adder_test.ghw)
 (Etapa 3): cada linha diz quais `SW`/`KEY` acionar e o que deve aparecer nos
 displays.
 
+**5. (Opcional) Regerar os diagramas de bits**, precisa do Node.js. Os `.svg` em
+`docs/wavedrom/` são gerados a partir dos `.json5` da mesma pasta:
+```bash
+cd docs/wavedrom
+npx wavedrom-cli -i formato-13bits.json5  -s formato-13bits.svg
+npx wavedrom-cli -i pinos-operando1.json5 -s pinos-operando1.svg
+npx wavedrom-cli -i pinos-operando2.json5 -s pinos-operando2.svg
+```
+
 > Se os scripts `.sh` não tiverem permissão de execução, rode antes:
 > `chmod +x sim/*.sh`.
 
@@ -79,6 +88,11 @@ lógica e a simulação de hardware usando VHDL.
 
 O valor representado é **(-1)ˢ × 0.f × 2ᵉ**. A representação é sempre
 *normalizada* (MSB da fração = 1) ou *zero*.
+
+![Formato de ponto flutuante de 13 bits](docs/wavedrom/formato-13bits.svg)
+
+_Diagrama de bits gerado com [WaveDrom](https://github.com/wavedrom/wavedrom); a
+fonte está em [`docs/wavedrom/formato-13bits.json5`](docs/wavedrom/formato-13bits.json5)._
 
 ## 2. Descrição gráfica do funcionamento do sistema
 
@@ -219,6 +233,26 @@ frac2 <= '1' & sw(6 downto 0);
 As linhas de `sign1/exp1/frac1`, `sign2` e `frac2` permanecem **iguais**: a
 adaptação é cirúrgica e é exatamente isso que a prova de equivalência (adiante)
 confirma numericamente.
+
+**Como as entradas da placa mapeiam nos 13 bits de cada operando.** Os dois
+diagramas abaixo mostram, bit a bit, de onde vem cada entrada. Fica visível a
+"aritmética de pinos": o operando 1 tem sinal e expoente fixos (só 2 bits da
+fração saem de `SW1`/`SW0`), enquanto o operando 2 é totalmente ajustável e o
+expoente reaproveita `SW9`/`SW8`, os dois switches que a DE10-Lite tem a mais,
+para cobrir os bits que os botões que faltam (o livro usava 4; a placa tem 2)
+não dão mais. Os `KEY` são ativos em `0`, daí o `not key`.
+
+_Operando 1 (fixo, exceto 2 bits da fração):_
+
+![Mapeamento de pinos do operando 1](docs/wavedrom/pinos-operando1.svg)
+
+_Operando 2 (totalmente ajustável):_
+
+![Mapeamento de pinos do operando 2](docs/wavedrom/pinos-operando2.svg)
+
+_Diagramas gerados com [WaveDrom](https://github.com/wavedrom/wavedrom); fontes em
+[`docs/wavedrom/`](docs/wavedrom/) (ver [`pinos-operando1.json5`](docs/wavedrom/pinos-operando1.json5)
+e [`pinos-operando2.json5`](docs/wavedrom/pinos-operando2.json5))._
 
 **Descrição gráfica do sistema**
 * Sem mudança na estrutura dos 4 estágios do somador (item 2), a adaptação

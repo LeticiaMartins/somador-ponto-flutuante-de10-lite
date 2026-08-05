@@ -1,0 +1,16 @@
+// Aritmetica de pinos - Operando 1 (fp_adder_test.vhd, DE10-Lite).
+//   sign1 <= '0';
+//   exp1  <= "1000";                      -- 8
+//   frac1 <= '1' & sw(1) & sw(0) & "10101";
+// Sinal e expoente sao fixos; a fracao tem 2 bits vindos de SW1/SW0.
+// Cores: type 2 = fixo, type 4 = switch.
+// Renderizar: npx wavedrom-cli -i pinos-operando1.json5 -s pinos-operando1.svg
+{ reg: [
+  { bits: 5, name: "10101",        attr: "fixo",        type: 2 },
+  { bits: 1, name: "SW0",                               type: 4 },
+  { bits: 1, name: "SW1",                               type: 4 },
+  { bits: 1, name: "1",            attr: "norm.",       type: 2 },
+  { bits: 4, name: "1000 (exp=8)", attr: "fixo",        type: 2 },
+  { bits: 1, name: "0",            attr: "sign fixo",   type: 2 },
+],
+  config: { bits: 13, lanes: 1, hspace: 1000 } }

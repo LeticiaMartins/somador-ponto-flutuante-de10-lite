@@ -1,0 +1,10 @@
+// Formato de ponto flutuante simplificado de 13 bits (Pong P. Chu, secao 3.7).
+// Valor = (-1)^sign * 0.frac * 2^exp = (-1)^sign * frac * 2^(exp-8).
+// Sempre normalizado (frac[7] = 1) ou zero (tudo 0).
+// Renderizar: npx wavedrom-cli -i formato-13bits.json5 -s formato-13bits.svg
+{ reg: [
+  { bits: 8, name: "frac", attr: "8 bits  [7:0]", type: 2 },
+  { bits: 4, name: "exp",  attr: "4 bits  [11:8]", type: 3 },
+  { bits: 1, name: "sign", attr: "[12]", type: 5 },
+],
+  config: { bits: 13, lanes: 1, hspace: 900 } }
